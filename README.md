@@ -105,7 +105,4 @@ mux.Handle("/exchange", nichijouSDK.NewExchangeHandler(nichijouSDK.ExchangeConfi
 
 ## 示例项目
 
-完整接入示例与协议说明维护在 [ChatRoomGameDemo](https://github.com/BlackCarDriver/ChatRoomGameDemo)：
-
-- [接入教程](https://github.com/BlackCarDriver/ChatRoomGameDemo/blob/main/接入教程.md)
-- [协议说明](https://github.com/BlackCarDriver/ChatRoomGameDemo/blob/main/协议说明.md)
+完整接入示例与协议说明维护在私有项目 ChatRoomGameDemo 中，参见该仓库根目录的 `接入教程.md` 与 `协议说明.md`。
