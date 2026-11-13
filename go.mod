@@ -1,4 +1,4 @@
-module ChatRoomGameDemo/nichijouSDK
+module github.com/BlackCarDriver/nichijouSDK
 
 go 1.21
 
