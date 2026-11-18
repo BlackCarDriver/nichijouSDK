@@ -25,6 +25,7 @@ const (
 	msgHelloAck           = "hello_ack"
 	msgRoomLeave          = "room_leave"
 	msgChatInGame         = "chat_in_game"
+	msgEmotionInGame      = "emotion_in_game"
 	msgConfigUpdate       = "config_update"
 	msgForceResync        = "force_resync"
 	msgRoomClosed         = "room_closed"
@@ -46,6 +47,17 @@ type State struct {
 	Text  string
 }
 
+// Emotion is an expression command resolved by the chat server. URL is an
+// absolute image address that the game page can render directly.
+type Emotion struct {
+	Nick      string
+	Text      string
+	URL       string
+	Width     string
+	Height    string
+	Timestamp int64
+}
+
 // Config contains only integration transport and identity settings. It does
 // not contain game-specific configuration.
 type Config struct {
@@ -60,10 +72,12 @@ type Config struct {
 
 // Hooks connect protocol events to the host application's game state.
 type Hooks struct {
-	States       func() map[string]State
-	RoomLP       func() string // 房间卡片副文案（如“对局中-围棋”），nil 表示不使用该能力
-	OnUserLeave  func(nick string)
-	OnChat       func(nick, text string, timestamp int64)
+	States      func() map[string]State
+	RoomLP      func() string // 房间卡片副文案（如“对局中-围棋”），nil 表示不使用该能力
+	OnUserLeave func(nick string)
+	OnChat      func(nick, text string, timestamp int64)
+	// OnEmotion 房间开启表情透传且消息命中表情库时回调；同一条消息不会再触发 OnChat。
+	OnEmotion    func(Emotion)
 	OnConfig     func(config map[string]interface{})
 	OnRoomClosed func()
 	Logger       *log.Logger
@@ -225,6 +239,29 @@ func (b *Bridge) handleMessage(data []byte) {
 		if b.hooks.OnChat != nil {
 			b.hooks.OnChat(head.Nick, head.Text, head.Timestamp)
 		}
+	case msgEmotionInGame:
+		if b.hooks.OnEmotion == nil {
+			return
+		}
+		var msg struct {
+			Nick          string `json:"nick"`
+			Text          string `json:"text"`
+			EmotionURL    string `json:"emotionUrl"`
+			EmotionWidth  string `json:"emotionWidth"`
+			EmotionHeight string `json:"emotionHeight"`
+			Timestamp     int64  `json:"timestamp"`
+		}
+		if err := json.Unmarshal(data, &msg); err != nil {
+			return
+		}
+		b.hooks.OnEmotion(Emotion{
+			Nick:      msg.Nick,
+			Text:      msg.Text,
+			URL:       msg.EmotionURL,
+			Width:     msg.EmotionWidth,
+			Height:    msg.EmotionHeight,
+			Timestamp: msg.Timestamp,
+		})
 	case msgJWTChallenge:
 		b.handleJWTChallenge(data)
 	case msgRoomClosed:

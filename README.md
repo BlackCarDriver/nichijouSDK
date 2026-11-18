@@ -7,7 +7,7 @@
 ## 安装
 
 ```bash
-go get github.com/BlackCarDriver/nichijouSDK@v0.1.0
+go get github.com/BlackCarDriver/nichijouSDK@v0.2.0
 ```
 
 在代码中导入：
@@ -50,12 +50,17 @@ bridge := nichijouSDK.NewBridge(nichijouSDK.Config{
     OnChat: func(nick, text string, timestamp int64) {
         game.BroadcastChat(nick, text, timestamp)
     },
+    OnEmotion: func(emotion nichijouSDK.Emotion) {
+        game.BroadcastEmotion(emotion.Nick, emotion.Text, emotion.URL, emotion.Timestamp)
+    },
     OnRoomClosed: func() {
         game.StopAcceptingPlayers()
     },
 })
 go bridge.Run()
 ```
+
+房间管理页开启“透传表情到游戏服务端”后，用户发送命中表情库的指令时，SDK 回调 `OnEmotion`，其中 `URL` 是可直接用于 `<img>` 的绝对地址，`Text` 为指令原文；同一条消息不会再触发 `OnChat`。
 
 状态变化后调用 `bridge.ScheduleFullReport()`；开局、终局等关键节点调用 `bridge.EventLog("对局开始")`。
 
@@ -88,7 +93,7 @@ mux.Handle("/exchange", nichijouSDK.NewExchangeHandler(nichijouSDK.ExchangeConfi
 | 常量 | 当前值 | 说明 |
 | --- | --- | --- |
 | `SDKName` | `nichijouSDK` | 标识使用的 SDK 实现 |
-| `Version` | `0.1.0` | SDK 发布版本，每次发布更新 |
+| `Version` | `0.2.0` | SDK 发布版本，每次发布更新 |
 | `ProtocolVersion` | `v1` | 仅在不兼容的协议变更时更新 |
 
 桥接握手会自动上报这三个值，游戏无需额外配置。每次发布打 `vX.Y.Z` tag，游戏升级依赖后重新构建并重启服务。
